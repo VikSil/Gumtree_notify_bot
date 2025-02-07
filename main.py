@@ -94,6 +94,8 @@ def get_nearby_results(soup: BeautifulSoup) -> pl.DataFrame:
 def send_sms_alert(msg: str) -> bool:
     '''
     Function logs into a D-Link DWR-921 B3 router and sends sms notifications
+    
+    This function was inspired by inf265/SMS-Dlink-DWR-921
     '''
 
     try:
