@@ -1,21 +1,30 @@
 from bs4 import BeautifulSoup
 from environ import Env
 from pathlib import Path
-from twilio.rest import Client
 
+import datetime
 import polars as pl
 import requests
+import sys
 
 BASE_DIR = Path(__file__).resolve().parent
 env = Env()
 env.read_env(BASE_DIR / 'variables.env')
-SMS_ACCOUNT_ID = env('TWILIO_SID')
-SMS_API_KEY = env('TWILIO_API_KEY')
-FROM_PHONE = env('TWILIO_PHONE_NUMBER')
-TO_PHONE = env('MY_PHONE_NUMBER')
+NUMBER = env('PHONE_NUMBER')
+IPADDRESS = env('ROUTER_IP')
+USERNAME = env('ROUTER_USER')
+PASSWORD = env('ROUTER_PASSWORD')
 
 
 def main():
+
+    now = datetime.datetime.now()
+    hour = now.hour
+    minute = now.minute
+
+    if (7 <= hour <= 8) and (0 <= minute <= 10):
+        send_sms_alert('Heartbeat from Gumtree script')
+        sys.exit()
 
     filename = 'ads.txt'
     URLs = ['http://www.gumtree.com/for-sale/freebies/uk/oxford']
@@ -31,15 +40,11 @@ def main():
                 ads = ads.filter(pl.col('title') != line.rstrip())
 
     for row in ads.rows(named=True):
-        try:
-            result = send_sms_alert(row['title'], row['url'], row['image'])
-            print(type(result))
-            print(result)
-        except Exception as e:
-            print(e)
-        else:
+        if send_sms_alert(f"New freebie: { row['title']}, image: {row['image']} ad: {row['url']}"):
             with open(filename, 'a') as f:
                 f.write(row['title'] + '\n')
+
+    truncate_file(filename)
 
 
 def get_html(url: str) -> BeautifulSoup:
@@ -86,15 +91,60 @@ def get_nearby_results(soup: BeautifulSoup) -> pl.DataFrame:
     return results
 
 
-def send_sms_alert(title: str, url: str, image: str):
+def send_sms_alert(msg: str) -> bool:
     '''
-    Function sends sms notifications about new ads
+    Function logs into a D-Link DWR-921 B3 router and sends sms notifications
     '''
-    msg = f'New freebie: {title}, image: {image} ad: {url}'
-    sms_client = Client(SMS_ACCOUNT_ID, SMS_API_KEY)
-    message = sms_client.messages.create(body=msg, from_=FROM_PHONE, to=TO_PHONE)
 
-    return message.status
+    try:
+
+        with requests.session() as c:
+            # Log in
+            response = c.get(
+                'http://'
+                + IPADDRESS
+                + '/log/in?un='
+                + USERNAME
+                + '&pw='
+                + PASSWORD
+                + '&rd=%2Fuir%2Fdwrhome.htm&rd2=%2Fuir%2Floginpage.htm&Nrd=1&Nlmb='
+            )
+
+            # Get next sms token
+            response = c.get('http://' + IPADDRESS + '/csrf.xml')
+            token_pos = response.text.index('<token>')
+            token = response.text[token_pos + 7 : token_pos + 13]
+
+            # Send sms
+            response = c.get(
+                'http://'
+                + IPADDRESS
+                + '/sys_smsmsg.htm?csrftok='
+                + token
+                + '&Nsend=1&Nmsgindex=0&S801E2701='
+                + NUMBER
+                + '&S801E2801='
+                + msg
+            )
+
+            response.text.index('Enter Message...')  # will raise exception if authorisation error occured
+            response = c.get('http://' + IPADDRESS + '/sms2.htm?Ncmd=2')
+    except:
+        return False
+
+    return True
+
+
+def truncate_file(filename: str) -> None:
+    '''
+    Function removes lines from file, leaving 50 last/newest lines
+    '''
+    lines = []
+    with open(filename, 'r+') as f:
+        lines = f.readlines()
+
+    with open(filename, 'w') as f:
+        f.writelines(lines[-50:])
 
 
 if __name__ == "__main__":
