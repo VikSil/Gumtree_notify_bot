@@ -23,7 +23,7 @@ def main():
     hour = now.hour
     minute = now.minute
 
-    if (7 <= hour <= 8) and (0 <= minute <= 10):
+    if (7 <= hour < 8) and (0 <= minute < 10):
         send_sms_alert('Heartbeat from Gumtree script')
         sys.exit()
 
