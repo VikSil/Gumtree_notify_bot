@@ -5,7 +5,7 @@ The script checks if new ads have been posted to a URL on Gumtree website. SMS n
 ## Prerequisites
 
 To run this script you will need:
-* D-Link DWR-921 router with mobile internet connection via SIM card
+* D-Link DWR-921 C3 router with mobile internet connection via SIM card
 * A computer connected to that router
 
 ## Setup
