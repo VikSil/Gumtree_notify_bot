@@ -6,6 +6,7 @@ import datetime
 import polars as pl
 import requests
 import sys
+import time
 
 BASE_DIR = Path(__file__).resolve().parent
 env = Env()
@@ -38,6 +39,8 @@ def main():
         for line in f:
             if line.rstrip() in titles:
                 ads = ads.filter(pl.col('title') != line.rstrip())
+
+    print(ads)
 
     for row in ads.rows(named=True):
         if send_sms_alert(f"New freebie: { row['title']}, image: {row['image']} ad: {row['url']}"):
@@ -131,6 +134,7 @@ def send_sms_alert(msg: str) -> bool:
 
             response.text.index('Enter Message...')  # will raise exception if authorisation error occured
             response = c.get('http://' + IPADDRESS + '/sms2.htm?Ncmd=2')
+            time.sleep(30)
     except:
         return False
 
