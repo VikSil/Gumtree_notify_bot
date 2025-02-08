@@ -60,7 +60,6 @@ def get_html(url: str) -> BeautifulSoup:
         'Accept-Language': 'en-US,en;q=0.9',
     }
     response = requests.get(url, headers=HEADERS)
-    # works with html parser as well as lxml - slightly different outputs, but the span tag is the same
     soup = BeautifulSoup(response.content.decode('utf-8', 'ignore'), 'html.parser')
 
     return soup
@@ -115,7 +114,7 @@ def send_sms_alert(msg: str) -> bool:
                 + '&rd=%2Fuir%2Fdwrhome.htm&rd2=%2Fuir%2Floginpage.htm&Nrd=1&Nlmb='
             )
 
-            # Get next sms token
+            # Get next sms page token
             response = c.get('http://' + IPADDRESS + '/csrf.xml')
             token_pos = response.text.index('<token>')
             token = response.text[token_pos + 7 : token_pos + 13]
