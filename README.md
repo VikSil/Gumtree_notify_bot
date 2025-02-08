@@ -11,7 +11,7 @@ To run this script you will need:
 ## Setup
 
 1. Install the requirements by running `pip install -r requirements.txt`
-2. Add the Gumtree URLs that you want to be parsed to `URLs` variable on line `30` of `main()` function.
+2. Add the Gumtree URLs that you want to be parsed to `URLs` variable on line `31` of `main()` function.
 3. Create a `variables.env` file and place it in the root directory. It should look something like this:
 
 ```
@@ -22,7 +22,7 @@ ROUTER_PASSWORD=ThisIsMyEncodedPasswordThatIPulledOutOfNetworkTabInBrowserInspec
 ```
 
 4. Create an `ads.txt` file in the root directory
-5. Once per day the script sends a Heartbeat message to notify that it is still running as scheduled. Adjust time to your liking on line `25` of `main()` function.
+5. Once per day the script sends a Heartbeat message to notify that it is still running as scheduled. Adjust time to your liking on line `26` of `main()` function.
 
 ## Execution
 
