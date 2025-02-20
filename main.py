@@ -69,26 +69,30 @@ def get_nearby_results(soup: BeautifulSoup) -> pl.DataFrame:
     '''
     Function parses HTML and returns a dataframe of recent nearby ad data
     '''
+    try:
+        middle_div = soup.find(name='div', class_='css-1gpy4qh-src')
 
-    middle_div = soup.find(name='div', class_='css-zfj6vx')
-    ads = middle_div.find_all(name='div', class_='css-in27v8')
+        ads = middle_div.find_all(name='div', class_='css-1uzjcc7-results-list')
 
-    data = {"title": [], "url": [], "image": []}
-    results = pl.DataFrame(data, schema={"title": pl.String, "url": pl.String, "image": pl.String})
+        data = {"title": [], "url": [], "image": []}
+        results = pl.DataFrame(data, schema={"title": pl.String, "url": pl.String, "image": pl.String})
 
-    for ad in ads:
-        title = ad.find(name='div', class_='e25keea13').getText().rstrip()
-        url = ad.find(name='a', class_='e25keea16', href=True)
-        image = ad.find(name='img')
-        if image != None:
-            image = str(image)
-            pos = image.index('https')
-            image = image[pos:-3]
-        else:
-            image = 'None'
+        for ad in ads:
+            title = ad.find(name='div', class_='e25keea13').getText().rstrip()
+            url = ad.find(name='a', class_='e25keea16', href=True)
+            image = ad.find(name='img')
+            if image != None:
+                image = str(image)
+                pos = image.index('https')
+                image = image[pos:-3]
+            else:
+                image = 'None'
 
-        new_row = pl.DataFrame([{"title": title, "url": 'https://www.gumtree.com/' + url['href'], "image": image}])
-        results = pl.concat([results, new_row])
+            new_row = pl.DataFrame([{"title": title, "url": 'https://www.gumtree.com/' + url['href'], "image": image}])
+            results = pl.concat([results, new_row])
+
+    except Exception as e:
+        send_sms_alert(f'Gumtree parsing script fell over with error: {e}')
 
     return results
 
@@ -149,7 +153,7 @@ def truncate_file(filename: str) -> None:
         lines = f.readlines()
 
     with open(filename, 'w') as f:
-        f.writelines(lines[-50:])
+        f.writelines(lines[-200:])
 
 
 if __name__ == "__main__":
