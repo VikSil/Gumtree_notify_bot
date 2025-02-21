@@ -70,7 +70,7 @@ def get_nearby_results(soup: BeautifulSoup) -> pl.DataFrame:
     Function parses HTML and returns a dataframe of recent nearby ad data
     '''
     try:
-        middle_div = soup.find(name='div', class_='css-1gpy4qh-src')
+        middle_div = soup.find(name='div', class_='css-7hwz3w-results-list')
 
         ads = middle_div.find_all(name='div', class_='css-1uzjcc7-results-list')
 
