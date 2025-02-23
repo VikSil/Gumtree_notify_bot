@@ -77,8 +77,9 @@ def get_nearby_results(soup: BeautifulSoup) -> pl.DataFrame:
         data = {"title": [], "url": [], "image": []}
         results = pl.DataFrame(data, schema={"title": pl.String, "url": pl.String, "image": pl.String})
 
+        bad_chars = ['#'] # remove chars that sms router does not like
+
         for ad in ads:
-            title = ad.find(name='div', class_='e25keea13').getText().rstrip()
             url = ad.find(name='a', class_='e25keea16', href=True)
             image = ad.find(name='img')
             if image != None:
@@ -87,6 +88,10 @@ def get_nearby_results(soup: BeautifulSoup) -> pl.DataFrame:
                 image = image[pos:-3]
             else:
                 image = 'None'
+            
+            title = ad.find(name='div', class_='e25keea13').getText().rstrip()
+            for char in bad_chars:
+                title = title.replace(char,'')
 
             new_row = pl.DataFrame([{"title": title, "url": 'https://www.gumtree.com/' + url['href'], "image": image}])
             results = pl.concat([results, new_row])
@@ -146,7 +151,7 @@ def send_sms_alert(msg: str) -> bool:
 
 def truncate_file(filename: str) -> None:
     '''
-    Function removes lines from file, leaving 50 last/newest lines
+    Function removes lines from file, leaving 200 last/newest lines
     '''
     lines = []
     with open(filename, 'r+') as f:
