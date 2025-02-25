@@ -40,8 +40,6 @@ def main():
             if line.rstrip() in titles:
                 ads = ads.filter(pl.col('title') != line.rstrip())
 
-    print(ads)
-
     for row in ads.rows(named=True):
         if send_sms_alert(f"New freebie: { row['title']}, image: {row['image']} ad: {row['url']}"):
             with open(filename, 'a') as f:
@@ -89,7 +87,11 @@ def get_nearby_results(soup: BeautifulSoup) -> pl.DataFrame:
             else:
                 image = 'None'
             
-            title = ad.find(name='div', class_='e25keea13').getText().rstrip()
+            title = ad.find(name='div', class_='e25keea13')
+            if title is not None: # not an ad-slot
+                title = title.getText().rstrip()
+            else:
+                break
             for char in bad_chars:
                 title = title.replace(char,'')
 
