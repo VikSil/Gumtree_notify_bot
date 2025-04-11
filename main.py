@@ -28,22 +28,23 @@ def main():
         sys.exit()
 
     filename = 'ads.txt'
-    URLs = ['http://www.gumtree.com/for-sale/freebies/uk/oxford']
+    URLs = {'Oxford':'http://www.gumtree.com/for-sale/freebies/uk/oxford',
+            'Abingdon':'http://www.gumtree.com/for-sale/freebies/uk/abingdon'}
 
-    for url in URLs:
-        page_html = get_html(url)
+    for key,value in URLs.items():
+        page_html = get_html(value)
         ads = get_nearby_results(page_html)
         titles = ads['title'].to_list()
 
-    with open(filename, 'r+') as f:
-        for line in f:
-            if line.rstrip() in titles:
-                ads = ads.filter(pl.col('title') != line.rstrip())
+        with open(filename, 'r+') as f:
+            for line in f:
+                if line.rstrip() in titles:
+                    ads = ads.filter(pl.col('title') != line.rstrip())
 
-    for row in ads.rows(named=True):
-        if send_sms_alert(f"New freebie: { row['title']}, image: {row['image']} ad: {row['url']}"):
-            with open(filename, 'a') as f:
-                f.write(row['title'] + '\n')
+        for row in ads.rows(named=True):
+            if send_sms_alert(f"New freebie in {key}: { row['title']}, image: {row['image']} ad: {row['url']}"):
+                with open(filename, 'a') as f:
+                    f.write(row['title'] + '\n')
 
     truncate_file(filename)
 
@@ -83,7 +84,7 @@ def get_nearby_results(soup: BeautifulSoup) -> pl.DataFrame:
             if image != None:
                 image = str(image)
                 pos = image.index('https')
-                image = image[pos:-3]
+                image = image[pos:-3] 
             else:
                 image = 'None'
             
@@ -145,7 +146,8 @@ def send_sms_alert(msg: str) -> bool:
             response.text.index('Enter Message...')  # will raise exception if authorisation error occured
             response = c.get('http://' + IPADDRESS + '/sms2.htm?Ncmd=2')
             time.sleep(30)
-    except:
+    except Exception as e:
+        print(e)
         return False
 
     return True
